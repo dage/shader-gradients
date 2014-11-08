@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>Pixel Zoomer</title>
+
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		
+        <style>
+            body {
+                font-family: Tahoma, 'Times New Roman';
+
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+            }
+
+            div#noWebGL {
+                display: none;
+                color: #e00;
+                font-size: x-large;
+            }
+        </style>
+            
+        <script src="threeJS/three.js"></script>        <!-- three.js, three.min.js -->
+    </head>
+    
+    <body>
+        <div id="noWebGL">Your browser doesn't support WebGL.</div>
+        <div id="container"></div>
+
+        <script id="vertexShader" type="x-shader/x-vertex">
+			void main()	{
+				gl_Position = vec4( position, 1.0 );
+			}
+		</script>
+
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+            
+            void main()	{
+                vec2 pos = gl_FragCoord.xy / resolution.xy;
+                
+                vec2 origo = vec2(0.5, 0.5);
+                float centerCol = 1.-length(origo-pos); 
+
+                gl_FragColor = vec4(pos.x, pos.y, centerCol, 1);
+            }
+		</script>
+
+        <script>
+            var renderer, camera, scene;
+            var uniforms;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                renderer.render(scene, camera);
+            }
+
+            function init() {
+                if (!isWebGLSupported()) {
+                    document.getElementById("noWebGL").style.display = "inline";
+                    return;
+                }
+
+                renderer = new THREE.WebGLRenderer();
+                document.getElementById("container").appendChild(renderer.domElement);
+
+                camera = new THREE.Camera();
+                camera.position.z = 1;
+
+                scene = new THREE.Scene();
+
+                uniforms = {
+                    resolution: { type: "v2", value: new THREE.Vector2() }
+                };
+
+
+                var material = new THREE.ShaderMaterial({
+                    uniforms: uniforms,
+                    vertexShader: document.getElementById('vertexShader').textContent,
+                    fragmentShader: document.getElementById('fragmentShader').textContent
+                });
+
+                var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), material);
+                scene.add(mesh);
+
+                window.addEventListener('resize', onResize, false);
+                window.addEventListener('orientationchange', onResize, false);
+                onResize();
+
+                animate();
+
+                function onResize(e) {
+                    var w = window.innerWidth;
+                    var h = window.innerHeight;
+
+                    uniforms.resolution.value.x = w;
+                    uniforms.resolution.value.y = h;
+
+                    renderer.setSize(w, h);
+
+                    renderer.domElement.setAttribute("width", w);
+                    renderer.domElement.setAttribute("height", h);
+                }
+
+                // http://threejs.org/examples/js/Detector.js
+                function isWebGLSupported() {
+                    return (function () { try { var canvas = document.createElement('canvas'); return !!window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')); } catch (e) { return false; } })();
+                }
+            }
+
+            init();
+        </script>
+    </body>
+</html>
