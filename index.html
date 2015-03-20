@@ -2,11 +2,11 @@
 
 <html lang="en">
     <head>
-        <title>Pixel Zoomer</title>
+        <title>.oOo.</title>
 
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		
+
         <style>
             body {
                 font-family: Tahoma, 'Times New Roman';
@@ -38,14 +38,34 @@
 
 		<script id="fragmentShader" type="x-shader/x-fragment">
 			uniform vec2 resolution;
+            uniform float time;
             
             void main()	{
-                vec2 pos = gl_FragCoord.xy / resolution.xy;
-                
-                vec2 origo = vec2(0.5, 0.5);
-                float centerCol = 1.-length(origo-pos); 
+                vec2 pos = gl_FragCoord.xy / resolution.xy - vec2(.5 + .5*sin(.115*time), .5+.5*sin(.23*time+.5));
+                vec2 pos2 = gl_FragCoord.xy / resolution.xy - vec2(.5 + .5*sin(-.1*time+.9), .5+.5*sin(.27*time));
 
-                gl_FragColor = vec4(pos.x, pos.y, centerCol, 1);
+                vec2 origo = vec2(1., 1.);
+                vec2 origo2 = vec2(1., -1.);
+
+                float centerCol = 1.-length(pos-origo); 
+
+                vec3 orgCol = vec3(pos.x, pos.y, centerCol);
+                vec3 orgCol2 = vec3(pos2.y, pos2.x, -centerCol);
+
+                // spherical coordinate:
+                float r = sqrt(orgCol.x*orgCol.x + orgCol.y*orgCol.y + orgCol.z*orgCol.z);
+                float r2 = sqrt(orgCol2.x*orgCol2.x + orgCol2.y*orgCol2.y + orgCol2.z*orgCol2.z);
+
+                vec2 angles = vec2(acos(orgCol.z/r), atan(orgCol.y/orgCol.x)*.1);
+                vec2 angles2 = vec2(acos(orgCol2.z/r2), atan(orgCol2.y/orgCol2.x));
+
+                angles *= vec2(.09*time, -.11*time);
+                angles2 *= vec2(.19*time, -.21*time);
+
+                vec4 outCol = vec4(sin(angles.x)*cos(angles.y), sin(angles.y)*cos(angles.x), cos(angles.y), 100);
+                vec4 outCol2 = vec4(sin(angles2.x)*cos(angles2.y), sin(angles2.y)*cos(angles2.x), cos(angles2.y), 0);
+                
+                gl_FragColor = outCol + outCol2 + vec4(.7, .6, .5, 1.);
             }
 		</script>
 
@@ -53,10 +73,18 @@
             var renderer, camera, scene;
             var uniforms;
 
+            var clock = new THREE.Clock();
+
             function animate() {
                 requestAnimationFrame(animate);
 
+                animateUniforms();
+
                 renderer.render(scene, camera);
+
+                function animateUniforms() {
+                    uniforms.time.value += clock.getDelta();
+                }
             }
 
             function init() {
@@ -74,7 +102,8 @@
                 scene = new THREE.Scene();
 
                 uniforms = {
-                    resolution: { type: "v2", value: new THREE.Vector2() }
+                    resolution: { type: "v2", value: new THREE.Vector2() },
+                    time: { type: "f", value: -1. }
                 };
 
 
