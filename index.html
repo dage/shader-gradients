@@ -53,11 +53,20 @@
                      +50.*sin(vec4(.02*time-2., -.031*time+.13, .039*time+.27, -.05*time)); 
 
                 // to cartesian color space
-                vec4 outCol = vec4(sin(angles.x)*cos(angles.y), sin(angles.y)*cos(angles.x), cos(angles.y), -.3);
-                vec4 outCol2 = vec4(sin(angles.z)*cos(angles.w), sin(angles.w)*cos(angles.z), cos(angles.w), .3);
+                vec3 outCol = vec3(sin(angles.x)*cos(angles.y), sin(angles.y)*cos(angles.x), cos(angles.y));
+                vec3 outCol2 = vec3(sin(angles.z)*cos(angles.w), sin(angles.w)*cos(angles.z), cos(angles.w));
+
+                mat3 palette = 1./255.*mat3(
+                    236., 208., 5.,
+                    180., 132., 150.,
+                    162., 94., 125.);
+
+                outCol2 = outCol2 * palette;
+                vec3 finalOut = outCol * (.22 + .37*sin(.32*time)) + outCol2 * (.34 + .26*cos(.123*time)) + .3 + .3*sin(vec3(-.1*time, -.11*time+.3, -.021*time-.2))*length(outCol2-outCol);
                 
-                vec4 finalOut = outCol * (.22 + .37*sin(.32*time)) + outCol2 * (.34 + .26*cos(.123*time)) + .6 + .5*sin(vec4(-.1*time, -.11*time+.3, -.021*time-.2, -1.))*length(outCol2-outCol);
-                gl_FragColor = finalOut;
+                finalOut = finalOut * palette;
+
+                gl_FragColor = vec4(finalOut, 0);
             }
 		</script>
 
@@ -95,7 +104,7 @@
 
                 uniforms = {
                     resolution: { type: "v2", value: new THREE.Vector2() },
-                    time: { type: "f", value: 15. }
+                    time: { type: "f", value: -0. }
                 };
 
                 var material = new THREE.ShaderMaterial({
