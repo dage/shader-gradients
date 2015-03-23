@@ -2,7 +2,7 @@
 
 <html lang="en">
     <head>
-        <title>.oOo.</title>
+        <title>. oOo .</title>
 
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -118,11 +118,12 @@
 
             var clock = new THREE.Clock();
 
-            window.addEventListener('mousedown', onChangeShader, false);
-            window.addEventListener('touchstart', onChangeShader, false);
+            window.addEventListener('mousedown', onPress, false);
+            window.addEventListener('touchstart', onPress, false);
 
-            function onChangeShader(e) {
-                mesh.material = materials[++currentMaterialIndex%materials.length];
+            function onPress(e) {
+                mesh.material = materials[++currentMaterialIndex % materials.length];
+                e.preventDefault();
             }
 
             function createMaterials() {
