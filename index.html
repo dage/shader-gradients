@@ -37,7 +37,7 @@
 			}
 		</script>
 
-		<script id="fragmentShader" type="x-shader/x-fragment">
+		<script id="fragmentShader1" type="x-shader/x-fragment">
 			uniform vec2 resolution;
             uniform float time;
             
@@ -61,8 +61,10 @@
                     180., 132., 150.,
                     162., 94., 125.);
 
+                outCol = outCol * palette;
                 outCol2 = outCol2 * palette;
-                vec3 finalOut = outCol * (.22 + .37*sin(.32*time)) + outCol2 * (.34 + .26*cos(.123*time)) + .3 + .3*sin(vec3(-.1*time, -.11*time+.3, -.021*time-.2))*length(outCol2-outCol);
+
+                vec3 finalOut = outCol * (.22 + .37*sin(.32*time)) + outCol2 * (.34 + .26*cos(.123*time)) + .3 + .2*sin(vec3(-.1*time, -.11*time+.3, -.021*time-.2))*length(outCol2-outCol);
                 
                 finalOut = finalOut * palette;
 
@@ -70,11 +72,71 @@
             }
 		</script>
 
+
+		<script id="fragmentShader2" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+            uniform float time;
+            
+            void main()	{
+                vec2 positionNormalized = gl_FragCoord.xy / resolution.xy - .5;
+                
+                positionNormalized += .5*sin(vec2(.025*time, -.065*time+1.3));  
+
+                // spherical coordinate with radius 1
+                vec4 angles = .2 * vec4(positionNormalized.xy, positionNormalized.xy);
+
+                angles *= .5*vec4(.07*time-2., -.41*time+.13, .19*time, -.21*time)  
+                     +50.*sin(vec4(.02*time-2., -.031*time+.13, .039*time+.27, -.05*time)); 
+
+                // to cartesian color space
+                vec3 outCol = vec3(sin(angles.x)*cos(angles.y), sin(angles.y)*cos(angles.x), cos(angles.y));
+                vec3 outCol2 = vec3(sin(angles.z)*cos(angles.w), sin(angles.w)*cos(angles.z), cos(angles.w));
+
+                mat3 palette = 1./255.*mat3(
+                    236., 208., 5.,
+                    180., 132., 150.,
+                    162., 94., 125.);
+
+                vec3 o = .5 * (outCol + outCol * palette);
+                vec3 o2 = .5 * (outCol2 + outCol2 * palette);
+
+                vec3 finalOut = o * (.22 + .37*sin(.32*time)) + o2 * (.34 + .26*cos(.123*time)) + .3 + .2*sin(vec3(-.1*time, -.11*time+.3, -.021*time-.2))*length(outCol2-outCol);
+                
+                finalOut = finalOut * palette;
+
+                finalOut = .5 * finalOut + finalOut.yzx * sin(angles.wxz) * length(outCol2-outCol) * palette;
+
+                gl_FragColor = vec4(finalOut, 0);
+            }
+		</script>
+
         <script>
-            var renderer, camera, scene;
-            var uniforms;
+            "use strict";
+
+            var renderer, camera, scene, uniforms, mesh;
+            var materials, currentMaterialIndex = 0;
 
             var clock = new THREE.Clock();
+
+            window.addEventListener('mousedown', onChangeShader, false);
+            window.addEventListener('touchstart', onChangeShader, false);
+
+            function onChangeShader(e) {
+                mesh.material = materials[++currentMaterialIndex%materials.length];
+            }
+
+            function createMaterials() {
+                var newMaterials = [];
+
+                for (var i = 1; i <= 2; i++) {
+                    newMaterials.push(new THREE.ShaderMaterial({
+                        uniforms: uniforms,
+                        vertexShader: document.getElementById('vertexShader').textContent,
+                        fragmentShader: document.getElementById('fragmentShader' + i).textContent
+                    }));
+                }
+                return newMaterials;
+            }
 
             function animate() {
                 requestAnimationFrame(animate);
@@ -104,16 +166,12 @@
 
                 uniforms = {
                     resolution: { type: "v2", value: new THREE.Vector2() },
-                    time: { type: "f", value: -0. }
+                    time: { type: "f", value: 0 }
                 };
 
-                var material = new THREE.ShaderMaterial({
-                    uniforms: uniforms,
-                    vertexShader: document.getElementById('vertexShader').textContent,
-                    fragmentShader: document.getElementById('fragmentShader').textContent
-                });
+                materials = createMaterials();
 
-                var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), material);
+                mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), materials[0]);
                 scene.add(mesh);
 
                 window.addEventListener('resize', onResize, false);
