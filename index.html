@@ -166,12 +166,12 @@
 
                 uniforms = {
                     resolution: { type: "v2", value: new THREE.Vector2() },
-                    time: { type: "f", value: 0 }
+                    time: { type: "f", value: 70 }
                 };
 
                 materials = createMaterials();
 
-                mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), materials[0]);
+                mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), materials[1]);
                 scene.add(mesh);
 
                 window.addEventListener('resize', onResize, false);
